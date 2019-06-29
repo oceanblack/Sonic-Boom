@@ -1,0 +1,75 @@
+var W, H, R, ctx, n, s = 5;
+
+function plane(i, j, now) {
+    const d = Math.sqrt(i*i + j*j);
+    
+    const a = d/20*Math.cos(now/5e3) + now/3e3;
+    const sin1 = Math.sin(a);
+    const cos1 = Math.cos(a);
+    const sin2 = Math.sin(now/5e3);
+    const cos2 = Math.cos(now/5e3);
+    
+    // base form and rotation in Z-axis
+    const rx = i*cos1 - j*sin1;
+    const ry = i*sin1 + j*cos1;
+    const rz = i*j/d * sin1;
+    
+    // X-axis
+    const x = rx;
+    const y = ry*cos2 - rz*sin2;
+    const z = ry*sin2 + rz*cos2;
+    const k = Math.sign(sin2)*Math.pow(Math.abs(sin2), 2/3)*3/2;
+    return {x:k*x, y:k*y, z:k*z};
+}
+
+function to2D(dot, now) {
+    const a = Math.PI/6;
+    const sin = Math.sin(a), cos = Math.cos(a);
+    const rx = dot.x*cos - dot.y*sin;
+    const ry = dot.x*sin + dot.y*cos;
+    const x = rx;
+    const y = ry/3 + dot.z;
+    return {x:x, y:y};
+}
+
+window.onload = function() {
+    var canvas = document.querySelector('canvas');
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    R = Math.min(W, H)/2;
+    n = Math.floor(R*0.9/s);
+    
+    animate();
+}
+
+function animate() {
+    window.requestAnimationFrame(animate);
+    ctx.fillRect(0, 0, W, H);
+    var dot;
+    
+    const now = Date.now(), sn = s*n,
+      r = Math.floor(255*(Math.sin(now/4e3)/4+0.75)),
+      g = Math.floor(255*(Math.cos(now/5e3)/4+0.75)),
+      b = Math.floor(255*(Math.sin(now/6e3)/4+0.75));
+    ctx.strokeStyle = 'rgba('+r+','+g+','+b+',0.1)';
+    
+    for(var i = -sn; i <= sn; i += s) {
+        ctx.beginPath();
+        for(var j = -sn; j <= sn; j += s) {
+            dot = to2D(plane(i, j, now), now);
+            ctx.lineTo(W/2 + dot.x, H/2 - dot.y);
+        }
+        ctx.stroke();
+    }
+    
+    for(var j = -sn; j <= sn; j += s) {
+        ctx.beginPath();
+        for(var i = -sn; i <= sn; i += s) {
+            dot = to2D(plane(i, j, now), now);
+            ctx.lineTo(W/2 + dot.x, H/2 - dot.y);
+        }
+        ctx.stroke();
+    }
+}
